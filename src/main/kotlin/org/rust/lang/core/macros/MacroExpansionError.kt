@@ -8,15 +8,21 @@ package org.rust.lang.core.macros
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.psi.tree.IElementType
+import org.rust.lang.core.macros.decl.FragmentKind
 
-sealed class MacroExpansionAndParsingError {
-    data class ExpansionError(val error: MacroExpansionError) : MacroExpansionAndParsingError()
-    class ParsingError(val expansionText: CharSequence, val context: MacroExpansionContext) : MacroExpansionAndParsingError()
+sealed class MacroExpansionAndParsingError<E> {
+    data class ExpansionError<E>(val error: E) : MacroExpansionAndParsingError<E>()
+    class ParsingError<E>(
+        val expansionText: CharSequence,
+        val context: MacroExpansionContext
+    ) : MacroExpansionAndParsingError<E>()
 }
 
-sealed class MacroExpansionError {
-    data class Matching(val errors: List<MacroMatchingError>) : MacroExpansionError()
-    object DefSyntax : MacroExpansionError()
+sealed class MacroExpansionError
+
+sealed class DeclMacroExpansionError: MacroExpansionError() {
+    data class Matching(val errors: List<MacroMatchingError>) : DeclMacroExpansionError()
+    object DefSyntax : DeclMacroExpansionError()
 }
 
 sealed class MacroMatchingError(macroCallBody: PsiBuilder) {
@@ -47,5 +53,22 @@ sealed class MacroMatchingError(macroCallBody: PsiBuilder) {
     }
     class Nesting(macroCallBody: PsiBuilder, val variableName: String): MacroMatchingError(macroCallBody) {
         override fun toString(): String = "Nesting($variableName)"
+    }
+}
+
+sealed class ProcMacroExpansionError: MacroExpansionError() {
+    data class Expansion(val message: String) : ProcMacroExpansionError()
+    data class ExceptionThrown(val cause: Exception) : ProcMacroExpansionError()
+    object Timeout : ProcMacroExpansionError() {
+        override fun toString(): String = "Timeout"
+    }
+    object CantRunExpander : ProcMacroExpansionError() {
+        override fun toString(): String = "CantRunExpander"
+    }
+    object ExecutableNotFound : ProcMacroExpansionError() {
+        override fun toString(): String = "ExecutableNotFound"
+    }
+    object MacroCallSyntax : ProcMacroExpansionError() {
+        override fun toString(): String = "ExecutableNotFound"
     }
 }
