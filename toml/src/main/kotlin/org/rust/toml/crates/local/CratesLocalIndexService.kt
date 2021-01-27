@@ -5,6 +5,7 @@
 
 package org.rust.toml.crates.local
 
+import com.google.common.annotations.VisibleForTesting
 import com.google.gson.Gson
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
@@ -90,17 +92,21 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
     private val isReady: AtomicBoolean = AtomicBoolean(true)
 
     init {
-        // Check index for update on `Cargo.toml` changes
-        ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-            override fun after(events: MutableList<out VFileEvent>) {
-                if (events.any { it.pathEndsWith(CargoConstants.MANIFEST_FILE) }) {
-                    if (isReady.get()) {
-                        updateIfNeeded()
+        if (!isUnitTestMode) {
+            // Check index for update on `Cargo.toml` changes
+            ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+                override fun after(events: MutableList<out VFileEvent>) {
+                    if (events.any { it.pathEndsWith(CargoConstants.MANIFEST_FILE) }) {
+                        if (isReady.get()) {
+                            updateIfNeeded()
+                        }
                     }
                 }
-            }
-        })
+            })
+        }
     }
+
+    fun isReady(): Boolean = isReady.get()
 
     override fun getState(): CratesLocalIndexState = state
     override fun loadState(state: CratesLocalIndexState) {
@@ -134,7 +140,8 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         return crateNames
     }
 
-    private fun updateIfNeeded() {
+    @VisibleForTesting
+    fun updateIfNeeded() {
         if (state.indexedCommitHash != registryHeadCommitHash && isReady.compareAndSet(true, false)) {
             CratesLocalIndexUpdateTask(registryHeadCommitHash).queue()
         }
