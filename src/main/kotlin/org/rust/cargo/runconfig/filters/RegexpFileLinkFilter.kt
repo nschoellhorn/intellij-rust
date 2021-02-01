@@ -116,6 +116,7 @@ open class RegexpFileLinkFilter(
     }
 
     private fun getSysroot(): String? = project.cargoProjects.allProjects.firstOrNull()?.rustcInfo?.sysroot
+    // TODO: check
     private fun getCargoRoot(): String = project.rustSettings.toolchain?.location?.parent.toString()
 
     sealed class ResolvedPath(val file: VirtualFile) {
