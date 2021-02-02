@@ -7,6 +7,7 @@ package org.rust.lang.core.dfa
 
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.MockEdition
 import org.rust.RsTestBase
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -1015,6 +1016,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         LOOP;
         1
         1;
+        BLOCK
+        Exit
+        Termination
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test conditional code`() = testCFG("""
+        fn main() {
+            1;
+            #[cfg(intellij_rust)] 2;
+            #[cfg(not(intellij_rust))] 3;
+            #[cfg(not(intellij_rust))] return;
+            4;
+        }
+    """, """
+        Entry
+        1
+        1;
+        #[cfg(intellij_rust)] 2
+        #[cfg(intellij_rust)] 2;
+        4
+        4;
         BLOCK
         Exit
         Termination

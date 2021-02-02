@@ -6,6 +6,7 @@
 package org.rust.lang.core.dfa
 
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.dfa.CFGBuilder.ScopeCFKind.Break
 import org.rust.lang.core.dfa.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
@@ -216,8 +217,15 @@ class CFGBuilder(
     override fun visitLabelDecl(labelDecl: RsLabelDecl) = finishWith(pred)
 
     override fun visitExprStmt(exprStmt: RsExprStmt) {
-        val exprExit = process(exprStmt.expr, pred)
-        finishWithAstNode(exprStmt, exprExit)
+        val expr = exprStmt.expr
+        // Conditionally disabled code should be ignored since it does not affect the execution
+        // https://doc.rust-lang.org/reference/expressions.html#expression-attributes
+        if (expr is RsOuterAttributeOwner && !expr.isEnabledByCfgSelf) {
+            finishWith(pred)
+        } else {
+            val exprExit = process(expr, pred)
+            finishWithAstNode(exprStmt, exprExit)
+        }
     }
 
     override fun visitPatIdent(patIdent: RsPatIdent) {
