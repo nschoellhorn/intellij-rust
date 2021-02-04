@@ -5,7 +5,6 @@
 
 package org.rust.toml.crates.local
 
-import com.google.gson.Gson
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -211,7 +210,7 @@ class CratesLocalIndexServiceImpl
                     if (line.isBlank()) return@forEachLine
 
                     try {
-                        versions.add(crateFromJson(line))
+                        versions.add(CargoRegistryCrateVersion.fromJson(line) ?: return@forEachLine)
                     } catch (e: Exception) {
                         LOG.warn("Failed to parse JSON from ${treeWalk.pathString}, line ${line}: ${e.message}")
                     }
@@ -277,16 +276,11 @@ class CratesLocalIndexServiceImpl
 private fun VFileEvent.pathEndsWith(suffix: String): Boolean =
     path.endsWith(suffix) || (this is VFilePropertyChangeEvent && oldPath.endsWith(suffix))
 
-val CargoRegistryCrate.lastVersion: String?
-    // TODO: Last version sometimes can differ from latest major
-    //  (e.g. if developer uploaded a patch to previous major)
-    get() = versions.lastOrNull()?.version
-
 private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
     override fun save(out: DataOutput, value: CargoRegistryCrate) {
         out.writeInt(value.versions.size)
         value.versions.forEach { version ->
-            out.writeUTF(version.version)
+            out.writeUTF(version.version.value)
             out.writeBoolean(version.isYanked)
 
             out.writeInt(version.features.size)
@@ -308,25 +302,12 @@ private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
             repeat(featuresSize) {
                 features.add(inp.readUTF())
             }
-            versions.add(CargoRegistryCrateVersion(version, yanked, features))
+
+            val cargoRegistryCrateVersion = CargoRegistryCrateVersion.create(version, yanked, features)
+            if (cargoRegistryCrateVersion != null) {
+                versions.add(cargoRegistryCrateVersion)
+            }
         }
         return CargoRegistryCrate(versions)
     }
-}
-
-private fun crateFromJson(json: String): CargoRegistryCrateVersion {
-    data class ParsedVersion(
-        val name: String,
-        val vers: String,
-        val yanked: Boolean,
-        val features: HashMap<String, List<String>>
-    )
-
-    val parsedVersion = Gson().fromJson(json, ParsedVersion::class.java)
-
-    return CargoRegistryCrateVersion(
-        parsedVersion.vers,
-        parsedVersion.yanked,
-        parsedVersion.features.map { it.key }
-    )
 }

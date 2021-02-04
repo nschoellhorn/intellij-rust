@@ -15,6 +15,3 @@ interface CratesLocalIndexService {
         fun getInstance(): CratesLocalIndexService = service()
     }
 }
-
-data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>)
-data class CargoRegistryCrateVersion(val version: String, val isYanked: Boolean, val features: List<String>)
