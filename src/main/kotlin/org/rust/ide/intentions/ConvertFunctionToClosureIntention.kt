@@ -1,0 +1,53 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.ide.intentions
+
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.block
+import org.rust.lang.core.psi.ext.body
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.resolve.ref.MethodResolveVariant
+
+class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFunctionToClosureIntention.Context>() {
+
+    override fun getText(): String = "Convert function to closure"
+
+    data class Context(
+        val targetFunction: RsFunction,
+    )
+
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
+        // We try to find a function declaration
+        val possibleTarget = element.ancestorStrict<RsFunction>() ?: return null
+
+        // if we found one, we need to check if it's a child of another function, which would mean it's an local function
+        possibleTarget.ancestorStrict<RsFunction>() ?: return null
+
+        return Context(possibleTarget)
+    }
+
+    override fun getFamilyName(): String = "Convert between local function and closure"
+
+    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+        val factory = RsPsiFactory(project)
+
+        val parametersText = ctx.targetFunction.valueParameters.joinToString(", ", transform = RsValueParameter::getText)
+        val returnText = ctx.targetFunction.retType?.text ?: ""
+
+        val bodyText = ctx.targetFunction.body?.text ?: return
+
+        val lambda = factory.createLambda("|$parametersText| $returnText $bodyText")
+        val declaration = factory.createLetDeclaration(ctx.targetFunction.identifier.text, lambda)
+
+        ctx.targetFunction.replace(declaration)
+    }
+
+}
