@@ -51,7 +51,9 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val body = ctx.lambda.expr?.text ?: "{}"
 
         val function = factory.createFunction("fn $name($parameters) $returnText $body")
-        ctx.assignment.replace(function)
+        val replaced = ctx.assignment.replace(function)
+
+        editor.caretModel.moveToOffset(replaced.endOffset)
     }
 
 }
