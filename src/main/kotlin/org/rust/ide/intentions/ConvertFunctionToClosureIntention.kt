@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.block
-import org.rust.lang.core.psi.ext.body
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 
 class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFunctionToClosureIntention.Context>() {
@@ -47,7 +44,10 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
         val lambda = factory.createLambda("|$parametersText| $returnText $bodyText")
         val declaration = factory.createLetDeclaration(ctx.targetFunction.identifier.text, lambda)
 
-        ctx.targetFunction.replace(declaration)
+        val replaced = ctx.targetFunction.replace(declaration) as RsLetDecl
+        replaced.semicolon?.endOffset?.let {
+            editor.caretModel.moveToOffset(it)
+        }
     }
 
 }
