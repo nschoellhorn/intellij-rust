@@ -17,4 +17,10 @@ class ConvertFunctionToClosureTest : RsIntentionTestBase(ConvertFunctionToClosur
         }
     """)
 
+    fun `test intention is only available in function signature`() = checkAvailableInSelectionOnly("""
+        fn main() {
+            <selection>fn foo(x: i32) -> i32 </selection>{ x + 1 }
+        }
+    """)
+
 }

@@ -21,9 +21,21 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
         val targetFunction: RsFunction,
     )
 
+    private fun getFunctionForElementInSignature(element: PsiElement): RsFunction? {
+        for (el in element.ancestors) {
+            return when (el) {
+                is RsFunction -> el
+                is RsBlock -> return null
+                else -> continue
+            }
+        }
+
+        return null
+    }
+
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         // We try to find a function declaration
-        val possibleTarget = element.ancestorStrict<RsFunction>() ?: return null
+        val possibleTarget = getFunctionForElementInSignature(element) ?: return null
 
         // if we found one, we need to check if it's a child of another function, which would mean it's an local function
         possibleTarget.ancestorStrict<RsFunction>() ?: return null
