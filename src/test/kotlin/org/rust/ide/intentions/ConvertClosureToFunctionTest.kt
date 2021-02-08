@@ -17,9 +17,13 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
         }
     """)
 
-    fun `test conversion not available for wildcard binding`() = doUnavailableTest("""
+    fun `test conversion auto-generates function name for wildcard binding`() = doAvailableTest("""
         fn main() {
             let _ = |x: i32/*caret*/| -> i32 { x + 1 };
+        }
+    """, """
+        fn main() {
+            fn func/*caret*/(x: i32) -> i32 { x + 1 }
         }
     """)
 
