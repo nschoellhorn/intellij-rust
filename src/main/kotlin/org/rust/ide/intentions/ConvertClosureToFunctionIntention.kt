@@ -26,6 +26,23 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val lambda: RsLambdaExpr,
     )
 
+    private fun getLetDeclarationForElementInSignature(element: PsiElement): RsLetDecl? {
+        if (element.text == ";") {
+            return null
+        }
+
+        for (el in element.ancestors) {
+            return when (el) {
+                is RsLetDecl -> el
+                is RsValueArgumentList -> el.ancestorStrict()
+                is RsBlock -> return null
+                else -> continue
+            }
+        }
+
+        return null
+    }
+
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         // We try to find a let declaration
         val possibleTarget = element.ancestorStrict<RsLetDecl>() ?: return null
@@ -35,7 +52,9 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
             return null
         }
 
-        return Context(possibleTarget, possibleTarget.expr as RsLambdaExpr)
+        val signatureTarget = getLetDeclarationForElementInSignature(element) ?: return null
+
+        return Context(signatureTarget, signatureTarget.expr as RsLambdaExpr)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {

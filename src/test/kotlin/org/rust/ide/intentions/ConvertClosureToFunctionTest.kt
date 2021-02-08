@@ -27,4 +27,10 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
         }
     """)
 
+    fun `test intention is only available on variable name and argument list`() = checkAvailableInSelectionOnly("""
+        fn main() {
+            <selection>let foo = |x: i32| -> i32 </selection>{ x + 1 };
+        }
+    """)
+
 }
