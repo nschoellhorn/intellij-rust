@@ -90,10 +90,7 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val body = if (lambdaExpr is RsBlockExpr) {
             lambdaExpr.text
         } else {
-            """{
-                    ${lambdaExpr?.text}
-            }
-            """.trimIndent()
+            "{ ${lambdaExpr?.text} }"
         }
 
         val function = factory.createFunction("fn $targetName($parametersText) $returnText $body")
