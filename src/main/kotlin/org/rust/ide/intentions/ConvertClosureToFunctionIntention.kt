@@ -9,10 +9,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.ide.presentation.render
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
+import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
@@ -73,8 +75,16 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val parameters = ctx.lambda.valueParameters.joinToString(", ") {
             it.text
         }
-        val returnText = ctx.lambda.retType?.text ?: ""
-        val body = ctx.lambda.expr?.text ?: "{}"
+        val lambdaExpr = ctx.lambda.expr
+        val returnText = ctx.lambda.retType?.text ?: " -> ${lambdaExpr?.type?.render()}"
+        val body = if (lambdaExpr is RsBlockExpr) {
+            lambdaExpr.text
+        } else {
+            """{
+                    ${lambdaExpr?.text}
+            }
+            """.trimIndent()
+        }
 
         val function = factory.createFunction("fn $targetName($parameters) $returnText $body")
         val replaced = ctx.assignment.replace(function)

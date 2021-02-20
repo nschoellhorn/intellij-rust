@@ -33,4 +33,24 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
         }
     """)
 
+    fun `test intention adds function body when closure doesnt have one`() = doAvailableTest("""
+        fn main() {
+            let foo = |x: i32/*caret*/| -> i32 x + 1;
+        }
+    """, """
+        fn main() {
+            fn foo(x: i32) -> i32 { x + 1 }/*caret*/
+        }
+    """)
+
+    fun `test intention adds return type to function when closure doesnt have one`() = doAvailableTest("""
+        fn main() {
+            let foo = |x: i32/*caret*/| x + 1;
+        }
+    """, """
+        fn main() {
+            fn foo(x: i32) -> i32 { x + 1 }/*caret*/
+        }
+    """)
+
 }
