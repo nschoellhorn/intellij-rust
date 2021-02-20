@@ -852,10 +852,6 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ConvertFunctionToClosureIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
             <className>org.rust.ide.intentions.ConvertClosureToFunctionIntention</className>
             <category>Rust</category>
         </intentionAction>
