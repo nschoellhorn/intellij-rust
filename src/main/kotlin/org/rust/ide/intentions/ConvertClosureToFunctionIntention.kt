@@ -81,10 +81,10 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val lambdaExpr = ctx.lambda.expr
         val returnText = if (ctx.lambda.retType != null) {
             ctx.lambda.retType!!.text
-        } else if (lambdaExpr != null && lambdaExpr.type != TyUnknown){
+        } else if (lambdaExpr != null && lambdaExpr.type != TyUnknown && lambdaExpr.type != TyUnit){
             "-> ${lambdaExpr.type.render()}"
         } else {
-            "-> ()"
+            ""
         }
 
         val body = if (lambdaExpr is RsBlockExpr) {
