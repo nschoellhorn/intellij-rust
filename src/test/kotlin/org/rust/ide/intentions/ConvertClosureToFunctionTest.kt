@@ -5,6 +5,9 @@
 
 package org.rust.ide.intentions
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctionIntention::class) {
 
     fun `test conversion from closure to function`() = doAvailableTest("""
@@ -43,6 +46,7 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test intention adds return type to function when closure doesnt have one`() = doAvailableTest("""
         fn main() {
             let foo = |x: i32/*caret*/| x + 1;
