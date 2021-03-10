@@ -57,4 +57,14 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
         }
     """)
 
+    fun `test intention does not add unit return type explicitly`() = doAvailableTest("""
+        fn main() {
+            let foo = |x: i32/*caret*/| println!(x);
+        }
+    """, """
+        fn main() {
+            fn foo(x: i32) { println!(x) }/*caret*/
+        }
+    """)
+
 }
